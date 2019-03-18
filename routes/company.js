@@ -9,8 +9,8 @@ var storage = multer.diskStorage({
     filename: function (req, file, cb) {
         cb(null, Date.now() + '.jpg')
     }
-  })
-var upload = multer({ storage: storage })
+})
+var upload = multer({ dest: 'assets/images/company/' })
 
 module.exports = function(app) {
 
@@ -38,51 +38,61 @@ module.exports = function(app) {
     })
 
     app.post('/newcompany', function (req, res) {
-        db.query(`
-            INSERT INTO company 
-            (
-                CTid, CTCid, Oid, 
-                Cname, Carea, Cmachine, 
-                Cemployee, Cstartdate, Chomeno, 
-                Cmoo, Csoi, Croad, 
-                Cvillage, SDTid, Did, Pid
-            ) VALUES (
-                '${req.body.CTid}', '${req.body.CTCid}', '${req.body.Oid}', 
-                '${req.body.Cname}', '${req.body.Carea}', '${req.body.Cmachine}', 
-                '${req.body.Cemployee}', '${req.body.Cstartdate}', '${req.body.Chomeno}', 
-                '${req.body.Cmoo}', '${req.body.Csoi}', '${req.body.Croad}', 
-                '${req.body.Cvillage}', '${req.body.SDTid}', '${req.body.Did}', '${req.body.Pid}'
-            )
-        `)       
-        res.send({
-            status: 'success'
-        })
+        try {
+            db.query(`
+                INSERT INTO company 
+                (
+                    CTid, CTCid, Oid, 
+                    Cname, Carea, Cmachine, 
+                    Cemployee, Cstartdate, Chomeno, 
+                    Cmoo, Csoi, Croad, 
+                    Cvillage, SDTid, Did, Pid
+                ) VALUES (
+                    '${req.body.CTid}', '${req.body.CTCid}', '${req.body.Oid}', 
+                    '${req.body.Cname}', '${req.body.Carea}', '${req.body.Cmachine}', 
+                    '${req.body.Cemployee}', '${req.body.Cstartdate}', '${req.body.Chomeno}', 
+                    '${req.body.Cmoo}', '${req.body.Csoi}', '${req.body.Croad}', 
+                    '${req.body.Cvillage}', '${req.body.SDTid}', '${req.body.Did}', '${req.body.Pid}'
+                )
+            `)       
+            res.send({
+                status: 'success'
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
     })
 
     app.post('/updatecompany/:id', function (req, res) {
-        db.query(`
-            UPDATE company
-            SET CTid = '${req.body.CTid}', 
-                CTCid = '${req.body.CTCid}', 
-                Oid = '${req.body.Oid}', 
-                Cname = '${req.body.Cname}', 
-                Carea = '${req.body.Carea}', 
-                Cmachine = '${req.body.Cmachine}', 
-                Cemployee = '${req.body.Cemployee}', 
-                Cstartdate = '${req.body.Cstartdate}', 
-                Chomeno = '${req.body.Chomeno}', 
-                Cmoo = '${req.body.Cmoo}', 
-                Csoi = '${req.body.Csoi}', 
-                Croad = '${req.body.Croad}', 
-                Cvillage = '${req.body.Cvillage}', 
-                SDTid = '${req.body.SDTid}', 
-                Did = '${req.body.Did}', 
-                Pid = '${req.body.Pid}'
-            WHERE Cid = ` + req.params.id
-        )
-        res.send({
-            status: 'success'
-        })
+        try {
+            db.query(`
+                UPDATE company
+                SET CTid = '${req.body.CTid}', 
+                    CTCid = '${req.body.CTCid}', 
+                    Oid = '${req.body.Oid}', 
+                    Cname = '${req.body.Cname}', 
+                    Carea = '${req.body.Carea}', 
+                    Cmachine = '${req.body.Cmachine}', 
+                    Cemployee = '${req.body.Cemployee}', 
+                    Cstartdate = '${req.body.Cstartdate}', 
+                    Chomeno = '${req.body.Chomeno}', 
+                    Cmoo = '${req.body.Cmoo}', 
+                    Csoi = '${req.body.Csoi}', 
+                    Croad = '${req.body.Croad}', 
+                    Cvillage = '${req.body.Cvillage}', 
+                    SDTid = '${req.body.SDTid}', 
+                    Did = '${req.body.Did}', 
+                    Pid = '${req.body.Pid}'
+                WHERE Cid = ` + req.params.id
+            )
+            res.send({
+                status: 'success'
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
     })
 
     app.get('/imagecompany/:id', function (req, res) {
@@ -98,32 +108,34 @@ module.exports = function(app) {
             var urlPath = 'http://localhost:5003/images/company/' + req.params.id + '/'
             var allfile = []
             var wg = true
-            var list = fs.readdirSync(newPath);
-            // Delete images in Folder
-            for(var i = 0; i < list.length; i++) {
-                var filename = path.join(newPath, list[i]);
-                var stat = fs.statSync(filename);
-
-                if(filename == "." || filename == "..") {
-                } else if(stat.isDirectory()) {
-                    rmdir(filename);
-                } else {
-                    fs.unlinkSync(filename);
+            if (fs.existsSync(newPath)) {
+                var list = fs.readdirSync(newPath);
+                // Delete images in Folder
+                for(var i = 0; i < list.length; i++) {
+                    var filename = path.join(newPath, list[i]);
+                    var stat = fs.statSync(filename);
+    
+                    if(filename == "." || filename == "..") {
+                    } else if(stat.isDirectory()) {
+                        rmdir(filename);
+                    } else {
+                        fs.unlinkSync(filename);
+                    }
                 }
+                fs.rmdirSync(newPath);
             }
-            fs.rmdirSync(newPath);
             // Delete images in table
             db.query(`DELETE FROM companyphoto WHERE Cid = ` + req.params.id)
             fs.mkdir(newPath, (err) => {
                 for (let i = 0; i < req.files.length; i++) {
-                    newFilePath =  newPath + req.files[i].filename
+                    newFilePath =  newPath + req.files[i].filename + '.jpg'
                     fs.copyFile(req.files[i].path, newFilePath, (err) => {
                         fs.unlink(req.files[i].path, (err) => {
                             allfile.push(newFilePath)
                             if (allfile.length === req.files.length) {
                                 let query = 'INSERT INTO companyphoto(CPpath, Cid) VALUES'
                                 req.files.forEach((e, idx) => {
-                                    query += `('${urlPath + req.files[i].filename}', ${req.params.id})`
+                                    query += `('${urlPath + req.files[idx].filename}.jpg', ${req.params.id})`
                                     if (idx !== req.files.length - 1) {
                                         query += ','
                                     }
@@ -140,15 +152,21 @@ module.exports = function(app) {
             })
         } catch (error) {
             console.log(error)
+            return
         }
     })
 
     app.post('/deletecompany/:id', function (req, res) {
-        db.query(`
+        try {
+            db.query(`
             DELETE FROM company
             WHERE Cid = ` + req.params.id)        
         res.send({
             status: 'success'
         })
+        } catch (error) {
+            console.log(error)
+            return
+        }
     })
 }

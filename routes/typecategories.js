@@ -3,10 +3,15 @@ var db = require('../config')
 module.exports = function(app) {
       
     app.get('/getcompanytypecategories/:id', function (req, res) {
-        db.query('SELECT * FROM `companytypecategories` WHERE CTid = ' + req.params.id, (err, result, f) => {
-            if(err) throw err
-            res.send(result)
-        })
+        try {
+            db.query('SELECT * FROM `companytypecategories` WHERE CTid = ' + req.params.id, (err, result, f) => {
+                if(err) throw err
+                res.send(result)
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
     })
     
     app.post('/addtypecategories', function (req, res) {
@@ -18,7 +23,7 @@ module.exports = function(app) {
                 ) VALUES (
                     '${req.body.CTid}', '${req.body.CTCname}'
                 )
-            `)        
+            `)
             res.send({
                 status: 'success'
             })
@@ -29,10 +34,15 @@ module.exports = function(app) {
     })
     
     app.get('/getcompanytypecategoriesdetail', function (req, res) {
-        db.query('SELECT * FROM `companytypecategoriesdetail`', (err, result, f) => {
-            if(err) throw err
-            res.send(result)
-        })
+        try {
+            db.query('SELECT * FROM `companytypecategoriesdetail`', (err, result, f) => {
+                if(err) throw err
+                res.send(result)
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
     })
     
     app.post('/addtypecategoriesdetail', function (req, res) {
