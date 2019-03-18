@@ -1,23 +1,43 @@
 var db = require('../config')
+const fs = require('fs');
+const path = require('path');
+var multer = require('multer')
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'assets/images/company/')
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '.jpg')
+    }
+  })
+var upload = multer({ storage: storage })
 
 module.exports = function(app) {
 
     app.get('/company', function (req, res) {
-        db.query('SELECT * FROM `company` LEFT JOIN owner ON owner.Oid = company.Oid', (err, result, f) => {
+        db.query(`SELECT * FROM company 
+                    LEFT JOIN owner ON owner.Oid = company.Oid
+                    LEFT JOIN companytype ON companytype.CTid = company.CTid `, (err, result, f) => {
+            if(err) throw err
+            res.send(result)
+        })
+    })
+    
+    app.get('/getcompanyforrequest', function (req, res) {
+        db.query(`SELECT Cid, Cname FROM company`, (err, result, f) => {
             if(err) throw err
             res.send(result)
         })
     })
 
-    // app.get('/companygetid/:id', function (req, res) {
-    //     db.query('SELECT * FROM `company` WHERE CompanyCode = ' + req.params.id , (err, result, f) => {
-    //         if(err) throw err
-    //         res.send(result)
-    //     })
-    // })
+    app.get('/companygetid/:id', function (req, res) {
+        db.query('SELECT * FROM `company` WHERE Cid = ' + req.params.id , (err, result, f) => {
+            if(err) throw err
+            res.send(result)
+        })
+    })
 
     app.post('/newcompany', function (req, res) {
-        console.log(req.body)
         db.query(`
             INSERT INTO company 
             (
@@ -33,39 +53,97 @@ module.exports = function(app) {
                 '${req.body.Cmoo}', '${req.body.Csoi}', '${req.body.Croad}', 
                 '${req.body.Cvillage}', '${req.body.SDTid}', '${req.body.Did}', '${req.body.Pid}'
             )
-        `)        
+        `)       
         res.send({
             status: 'success'
         })
     })
 
-    // app.post('/updatecompany/:id', function (req, res) {
-    //     console.log(req.body)
-    //     db.query(`
-    //         UPDATE company
-    //         SET 
-    //             CompanyCode = '${req.body.CompanyCode}',
-    //             CompanyName = '${req.body.CompanyName}', 
-    //             TypeServiceCode = '${req.body.TypeServiceCode}',
-    //             TypeServiceDetail = '${req.body.TypeServiceDetail}', 
-    //             OwnerID = '${req.body.OwnerID}', 
-    //             CompanyNo = '${req.body.CompanyNo}',
-    //             CompanyMoo = '${req.body.CompanyMoo}', 
-    //             CompanySoi = '${req.body.CompanySoi}', 
-    //             CompanyRoad = '${req.body.CompanyRoad}',
-    //             CompanyTumbon = '${req.body.CompanyTumbon}', 
-    //             CompanyPhone = '${req.body.CompanyPhone}', 
-    //             CompanyArea = '${req.body.CompanyArea}',
-    //             CompanyMachine = '${req.body.CompanyMachine}', 
-    //             CompanyLabor = '${req.body.CompanyLabor}'
-    //         WHERE CompanyCode = ` + req.params.id)        
-    //     res.send({
-    //         status: 'success'
-    //     })
-    // })
+    app.post('/updatecompany/:id', function (req, res) {
+        db.query(`
+            UPDATE company
+            SET CTid = '${req.body.CTid}', 
+                CTCid = '${req.body.CTCid}', 
+                Oid = '${req.body.Oid}', 
+                Cname = '${req.body.Cname}', 
+                Carea = '${req.body.Carea}', 
+                Cmachine = '${req.body.Cmachine}', 
+                Cemployee = '${req.body.Cemployee}', 
+                Cstartdate = '${req.body.Cstartdate}', 
+                Chomeno = '${req.body.Chomeno}', 
+                Cmoo = '${req.body.Cmoo}', 
+                Csoi = '${req.body.Csoi}', 
+                Croad = '${req.body.Croad}', 
+                Cvillage = '${req.body.Cvillage}', 
+                SDTid = '${req.body.SDTid}', 
+                Did = '${req.body.Did}', 
+                Pid = '${req.body.Pid}'
+            WHERE Cid = ` + req.params.id
+        )
+        res.send({
+            status: 'success'
+        })
+    })
+
+    app.get('/imagecompany/:id', function (req, res) {
+        db.query('SELECT * FROM `companyphoto` WHERE Cid = ' + req.params.id , (err, result, f) => {
+            if(err) throw err
+            res.send(result)
+        })
+    })
+
+    app.post('/imagecompany/:id', upload.array('files', 12), function (req, res) {
+        try {
+            var newPath = 'assets/images/company/' + req.params.id + '/'
+            var urlPath = 'http://localhost:5003/images/company/' + req.params.id + '/'
+            var allfile = []
+            var wg = true
+            var list = fs.readdirSync(newPath);
+            // Delete images in Folder
+            for(var i = 0; i < list.length; i++) {
+                var filename = path.join(newPath, list[i]);
+                var stat = fs.statSync(filename);
+
+                if(filename == "." || filename == "..") {
+                } else if(stat.isDirectory()) {
+                    rmdir(filename);
+                } else {
+                    fs.unlinkSync(filename);
+                }
+            }
+            fs.rmdirSync(newPath);
+            // Delete images in table
+            db.query(`DELETE FROM companyphoto WHERE Cid = ` + req.params.id)
+            fs.mkdir(newPath, (err) => {
+                for (let i = 0; i < req.files.length; i++) {
+                    newFilePath =  newPath + req.files[i].filename
+                    fs.copyFile(req.files[i].path, newFilePath, (err) => {
+                        fs.unlink(req.files[i].path, (err) => {
+                            allfile.push(newFilePath)
+                            if (allfile.length === req.files.length) {
+                                let query = 'INSERT INTO companyphoto(CPpath, Cid) VALUES'
+                                req.files.forEach((e, idx) => {
+                                    query += `('${urlPath + req.files[i].filename}', ${req.params.id})`
+                                    if (idx !== req.files.length - 1) {
+                                        query += ','
+                                    }
+                                })
+                                db.query(query)
+                                res.send({
+                                    success: true,
+                                    filePath: allfile
+                                })
+                            }
+                        })
+                    })
+                }
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    })
 
     app.post('/deletecompany/:id', function (req, res) {
-        console.log(req.body)
         db.query(`
             DELETE FROM company
             WHERE Cid = ` + req.params.id)        
