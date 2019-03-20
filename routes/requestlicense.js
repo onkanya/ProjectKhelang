@@ -1,4 +1,5 @@
 var db = require('../config')
+var moment = require('moment');
 
 module.exports = function(app) {
     app.post('/newrequest', function (req, res) {
@@ -7,7 +8,7 @@ module.exports = function(app) {
                 INSERT INTO requestlicense
                 (
                     RLTid, Cid, RLnorequest,
-                    RLdate, Prefixid, RLfname,
+                    Prefixid, RLfname,
                     RLlname, RLage, RLnationality,
                     RLhomeno, RLmoo, RLsoi,
                     RLroad, RLvillage, SDTid,
@@ -15,7 +16,7 @@ module.exports = function(app) {
                     RLemail, RLdetail, Uid
                 ) VALUES (
                     '${req.body.RLTid}', '${req.body.Cid}', '${req.body.RLnorequest}',
-                    '${req.body.RLdate}', '${req.body.Prefixid}', '${req.body.RLfname}',
+                    '${req.body.Prefixid}', '${req.body.RLfname}',
                     '${req.body.RLlname}', '${req.body.RLage}', '${req.body.RLnationality}',
                     '${req.body.RLhomeno}', '${req.body.RLmoo}', '${req.body.RLsoi}',
                     '${req.body.RLroad}', '${req.body.RLvillage}', '${req.body.SDTid}',
@@ -34,13 +35,11 @@ module.exports = function(app) {
     
     app.post('/updaterequest/:id', function (req, res) {
         try {
-            console.log(req.body)
             db.query(`
                 UPDATE requestlicense
                 SET RLTid = '${req.body.RLTid}',
                     Cid = '${req.body.Cid}',
                     RLnorequest = '${req.body.RLnorequest}',
-                    RLdate = '${req.body.RLdate}',
                     Prefixid = '${req.body.Prefixid}',
                     RLfname = '${req.body.RLfname}',
                     RLlname = '${req.body.RLlname}',
@@ -63,7 +62,6 @@ module.exports = function(app) {
             })
         } catch (error) {
             console.log(error)
-            return
         }
     })
     
@@ -84,8 +82,12 @@ module.exports = function(app) {
 
     app.get('/getrequest', function (req, res) {
         db.query(`SELECT * FROM requestlicense 
-                    LEFT JOIN company ON company.Cid = requestlicense.Cid`, (err, result, f) => {
+                    LEFT JOIN company ON company.Cid = requestlicense.Cid
+                    LEFT JOIN requestlicensetype ON requestlicensetype.RLTid = requestlicense.RLTid`, (err, result, f) => {
             if(err) throw err
+            result.forEach(e => {
+                e.RLdate = moment(e.RLdate).format('DD-MM-YYYY')
+            })
             res.send(result)
         })
     })
@@ -94,6 +96,9 @@ module.exports = function(app) {
         try {
             db.query(`SELECT * FROM requestlicense WHERE RLid = ` + req.params.id , (err, result, f) => {
                 if(err) throw err
+                result.forEach(e => {
+                    e.RLdate = moment(e.RLdate).format('YYYY-MM-DD')
+                })
                 res.send(result)
             })
         }

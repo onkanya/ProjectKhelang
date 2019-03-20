@@ -1,4 +1,5 @@
 var db = require('../config')
+var moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 var multer = require('multer')
@@ -33,6 +34,9 @@ module.exports = function(app) {
     app.get('/companygetid/:id', function (req, res) {
         db.query('SELECT * FROM `company` WHERE Cid = ' + req.params.id , (err, result, f) => {
             if(err) throw err
+            result.forEach(e => {
+                e.Cstartdate = moment(e.Cstartdate).format('YYYY-MM-DD')
+            })
             res.send(result)
         })
     })
