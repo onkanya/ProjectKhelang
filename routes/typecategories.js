@@ -1,7 +1,7 @@
 var db = require('../config')
 
 module.exports = function(app) {
-      
+    
     app.get('/getcompanytypecategories/:id', function (req, res) {
         try {
             db.query('SELECT * FROM `companytypecategories` WHERE CTid = ' + req.params.id, (err, result, f) => {

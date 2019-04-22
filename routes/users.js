@@ -47,8 +47,7 @@ module.exports = function(app) {
         } catch (error) {
             console.log(error)
             return
-        }
-        
+        }        
     })
 
     app.get('/getusers/:id', function (req, res) {

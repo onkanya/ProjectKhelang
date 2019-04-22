@@ -16,9 +16,13 @@ var upload = multer({ dest: 'assets/images/company/' })
 module.exports = function(app) {
 
     app.get('/company', function (req, res) {
-        db.query(`SELECT * FROM company 
+        db.query(`SELECT * FROM company
+                    LEFT JOIN requestlicense ON requestlicense.Cid = company.Cid 
+                    LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
+                    LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
                     LEFT JOIN owner ON owner.Oid = company.Oid
-                    LEFT JOIN companytype ON companytype.CTid = company.CTid `, (err, result, f) => {
+                    LEFT JOIN companytype ON companytype.CTid = company.CTid
+                    WHERE hcisummary.HCISresult = 1`, (err, result, f) => {
             if(err) throw err
             res.send(result)
         })
@@ -32,7 +36,10 @@ module.exports = function(app) {
     })
 
     app.get('/companygetid/:id', function (req, res) {
-        db.query('SELECT * FROM `company` WHERE Cid = ' + req.params.id , (err, result, f) => {
+        db.query(`SELECT * FROM company
+                LEFT JOIN licensefee
+                ON licensefee.LFid = company.LFid
+                WHERE Cid = ` + req.params.id , (err, result, f) => {
             if(err) throw err
             result.forEach(e => {
                 e.Cstartdate = moment(e.Cstartdate).format('YYYY-MM-DD')
@@ -46,21 +53,28 @@ module.exports = function(app) {
             db.query(`
                 INSERT INTO company 
                 (
-                    CTid, CTCid, Oid, 
+                    CTid, LFid, Oid, 
                     Cname, Carea, Cmachine, 
                     Cemployee, Cstartdate, Chomeno, 
                     Cmoo, Csoi, Croad, 
                     Cvillage, SDTid, Did, Pid
                 ) VALUES (
-                    '${req.body.CTid}', '${req.body.CTCid}', '${req.body.Oid}', 
+                    '${req.body.CTid}', '${req.body.LFid}', '${req.body.Oid}', 
                     '${req.body.Cname}', '${req.body.Carea}', '${req.body.Cmachine}', 
                     '${req.body.Cemployee}', '${req.body.Cstartdate}', '${req.body.Chomeno}', 
                     '${req.body.Cmoo}', '${req.body.Csoi}', '${req.body.Croad}', 
                     '${req.body.Cvillage}', '${req.body.SDTid}', '${req.body.Did}', '${req.body.Pid}'
                 )
-            `)       
-            res.send({
-                status: 'success'
+            `, (err, result, f) => {
+                if (err) throw err
+                db.query('SELECT LAST_INSERT_ID() as Cid', (err2, result2, f2) => {
+                    if (err2) throw err2
+                    console.log(result2)
+                    res.send({
+                        Cid: result2[0].Cid,
+                        status: 'success'
+                    })
+                })
             })
         } catch (error) {
             console.log(error)

@@ -7,7 +7,7 @@ module.exports = function(app) {
             db.query(`
                 INSERT INTO requestlicense
                 (
-                    RLTid, Cid, RLnorequest,
+                    Cid, RLnorequest,
                     Prefixid, RLfname,
                     RLlname, RLage, RLnationality,
                     RLhomeno, RLmoo, RLsoi,
@@ -15,7 +15,7 @@ module.exports = function(app) {
                     Did, Pid, RLtel,
                     RLemail, RLdetail, Uid
                 ) VALUES (
-                    '${req.body.RLTid}', '${req.body.Cid}', '${req.body.RLnorequest}',
+                    '${req.body.Cid}', '${req.body.RLnorequest}',
                     '${req.body.Prefixid}', '${req.body.RLfname}',
                     '${req.body.RLlname}', '${req.body.RLage}', '${req.body.RLnationality}',
                     '${req.body.RLhomeno}', '${req.body.RLmoo}', '${req.body.RLsoi}',
@@ -35,10 +35,10 @@ module.exports = function(app) {
     
     app.post('/updaterequest/:id', function (req, res) {
         try {
+            console.log(req.body.RLdate)
             db.query(`
                 UPDATE requestlicense
-                SET RLTid = '${req.body.RLTid}',
-                    Cid = '${req.body.Cid}',
+                SET Cid = '${req.body.Cid}',
                     RLnorequest = '${req.body.RLnorequest}',
                     Prefixid = '${req.body.Prefixid}',
                     RLfname = '${req.body.RLfname}',
@@ -79,11 +79,28 @@ module.exports = function(app) {
             return
         }
     })
+    
+    app.post('/confirmrequest/:id', function (req, res) {
+        try {
+            console.log(req.body)
+            db.query(`
+                UPDATE requestlicense
+                SET RLstatus = '${req.body.RLstatus}',
+                    RLnoted = '${req.body.RLnoted}',
+                    RLgetlicensedate = '${req.body.RLgetlicensedate}'
+                WHERE RLid = ` + req.params.id)
+            res.send({
+                status: 'success'
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
+    })
 
     app.get('/getrequest', function (req, res) {
         db.query(`SELECT * FROM requestlicense 
-                    LEFT JOIN company ON company.Cid = requestlicense.Cid
-                    LEFT JOIN requestlicensetype ON requestlicensetype.RLTid = requestlicense.RLTid`, (err, result, f) => {
+                    LEFT JOIN company ON company.Cid = requestlicense.Cid`, (err, result, f) => {
             if(err) throw err
             result.forEach(e => {
                 e.RLdate = moment(e.RLdate).format('DD-MM-YYYY')
@@ -97,8 +114,63 @@ module.exports = function(app) {
             db.query(`SELECT * FROM requestlicense WHERE RLid = ` + req.params.id , (err, result, f) => {
                 if(err) throw err
                 result.forEach(e => {
+                    e.RLdate = moment(e.RLdate).format('DD-MM-YYYY')
+                    e.RLgetlicensedate = moment(e.RLgetlicensedate).format('DD-MM-YYYY')
+                })
+                res.send(result)
+            })
+        }
+        catch (error) {
+            console.log(error)
+            return
+        }
+    })
+    
+    app.get('/getrequestforinvestigation', function (req, res) {
+        try {
+            db.query(`SELECT requestlicense.RLid, RLnorequest, RLgetlicensedate, Cname, RLfname, RLlname, RLstatus,HCISresult
+            FROM requestlicense 
+            INNER JOIN company ON company.Cid = requestlicense.Cid
+            LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
+            LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
+            WHERE RLstatus > 2` , (err, result, f) => {
+                if(err) throw err
+                result.forEach(e => {
                     e.RLdate = moment(e.RLdate).format('YYYY-MM-DD')
                 })
+                res.send(result)
+            })
+        }
+        catch (error) {
+            console.log(error)
+            return
+        }
+    })
+    
+    app.get('/getrequestforlicense', function (req, res) {
+        try {
+            db.query(`SELECT RLid, RLnorequest, RLgetlicensedate, Cname, RLfname, RLlname, RLstatus
+            FROM requestlicense 
+            INNER JOIN company
+            ON company.Cid = requestlicense.Cid
+            WHERE RLstatus > 2` , (err, result, f) => {
+                if(err) throw err
+                result.forEach(e => {
+                    e.RLdate = moment(e.RLdate).format('YYYY-MM-DD')
+                })
+                res.send(result)
+            })
+        }
+        catch (error) {
+            console.log(error)
+            return
+        }
+    })
+
+    app.get('/getRLid/:id', function (req, res) {
+        try {
+            db.query(`SELECT Cid, CONCAT(RLfname, ' ', RLlname) as RLname FROM requestlicense WHERE RLid = ` + req.params.id , (err, result, f) => {
+                if(err) throw err
                 res.send(result)
             })
         }
