@@ -11,7 +11,7 @@ var storage = multer.diskStorage({
         cb(null, Date.now() + '.pdf')
     }
 })
-var upload = multer({ dest: 'assets/images/company/' })
+var upload = multer({ dest: 'assets/pdf/requestlicense/' })
 
 module.exports = function(app) {
     app.post('/newrequest', function (req, res) {
