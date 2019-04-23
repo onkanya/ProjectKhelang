@@ -1,5 +1,17 @@
 var db = require('../config')
 var moment = require('moment');
+const fs = require('fs');
+const path = require('path');
+var multer = require('multer')
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'assets/pdf/requestlicense/')
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '.pdf')
+    }
+})
+var upload = multer({ dest: 'assets/images/company/' })
 
 module.exports = function(app) {
     app.post('/newrequest', function (req, res) {
@@ -22,11 +34,16 @@ module.exports = function(app) {
                     '${req.body.RLroad}', '${req.body.RLvillage}', '${req.body.SDTid}',
                     '${req.body.Did}', '${req.body.Pid}', '${req.body.RLtel}',
                     '${req.body.RLemail}', '${req.body.RLdetail}', '${req.body.Uid}'
-                )
-            `)
-            res.send({
-                status: 'success'
-            })
+                )`,  (err, result, f) => {
+                    if (err) throw err
+                    db.query('SELECT LAST_INSERT_ID() as RLid', (err2, result2, f2) => {
+                        if (err2) throw err2
+                        res.send({
+                            RLid: result2[0].RLid,
+                            status: 'success'
+                        })
+                    })
+                })
         } catch (error) {
             console.log(error)
             return
@@ -175,6 +192,67 @@ module.exports = function(app) {
             })
         }
         catch (error) {
+            console.log(error)
+            return
+        }
+    })
+
+    app.get('/RLpdf/:id', function (req, res) {
+        db.query('SELECT * FROM requestpdf WHERE RLid = ' + req.params.id , (err, result, f) => {
+            if(err) throw err
+            res.send(result)
+        })
+    })
+
+    app.post('/RLpdf/:id', upload.array('files', 12), function (req, res) {
+        try {
+            var newPath = 'assets/pdf/requestlicense/' + req.params.id + '/'
+            var urlPath = 'http://localhost:5003/pdf/requestlicense/' + req.params.id + '/'
+            var allfile = []
+            var wg = true
+            if (fs.existsSync(newPath)) {
+                var list = fs.readdirSync(newPath);
+                // Delete images in Folder
+                for(var i = 0; i < list.length; i++) {
+                    var filename = path.join(newPath, list[i]);
+                    var stat = fs.statSync(filename);
+    
+                    if(filename == "." || filename == "..") {
+                    } else if(stat.isDirectory()) {
+                        rmdir(filename);
+                    } else {
+                        fs.unlinkSync(filename);
+                    }
+                }
+                fs.rmdirSync(newPath);
+            }
+            // Delete images in table
+            db.query(`DELETE FROM requestpdf WHERE RLid = ` + req.params.id)
+            fs.mkdir(newPath, (err) => {
+                for (let i = 0; i < req.files.length; i++) {
+                    newFilePath =  newPath + req.files[i].filename + '.pdf'
+                    fs.copyFile(req.files[i].path, newFilePath, (err) => {
+                        fs.unlink(req.files[i].path, (err) => {
+                            allfile.push(newFilePath)
+                            if (allfile.length === req.files.length) {
+                                let query = 'INSERT INTO requestpdf(RPDFpath, RLid) VALUES'
+                                req.files.forEach((e, idx) => {
+                                    query += `('${urlPath + req.files[idx].filename}.pdf', ${req.params.id})`
+                                    if (idx !== req.files.length - 1) {
+                                        query += ','
+                                    }
+                                })
+                                db.query(query)
+                                res.send({
+                                    success: true,
+                                    filePath: allfile
+                                })
+                            }
+                        })
+                    })
+                }
+            })
+        } catch (error) {
             console.log(error)
             return
         }

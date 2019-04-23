@@ -20,4 +20,23 @@ module.exports = function(app) {
             console.log(error)
         }
     })
+
+    app.post('/updatehcigeneral/:id', function (req, res) {
+        try {
+            db.query(`
+                UPDATE hcigeneral
+                SET HCIGbuilding = '${req.body.HCIGbuilding}', 
+                    HCIGdayopen = '${req.body.HCIGdayopen}', 
+                    HCIGtimeopen = '${req.body.HCIGtimeopen}', 
+                    HCIGtimeclose = '${req.body.HCIGtimeclose}'
+                WHERE HCIGid = ` + req.params.id
+            )
+            res.send({
+                status: 'success'
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
+    })
 }

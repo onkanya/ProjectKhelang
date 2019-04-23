@@ -19,4 +19,21 @@ module.exports = function(app) {
             console.log(error)
         }
     })
+
+    app.post('/updatehcisummary/:id', function (req, res) {
+        try {
+            db.query(`
+                UPDATE hcisummary
+                SET HCISresult  = '${req.body.HCISresult}', 
+                    HCIScomment = '${req.body.HCIScomment}'
+                WHERE HCISid = ` + req.params.id
+            )
+            res.send({
+                status: 'success'
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
+    })
 }

@@ -73,6 +73,47 @@ module.exports = function(app) {
             return
         }
     })
+
+    app.post('/updatehcienvironment/:id', function (req, res) {
+        const reqData = req.body
+        try {
+            db.query(`
+                UPDATE hcienvironment
+                SET HCIEbuildprotect = '${boolToIntToString(reqData.HCIEbuildprotect)}',
+                    HCIEbuildprotectnoted = '${reqData.HCIEbuildprotectnoted}',
+                    HCIEbuilddoor = '${boolToIntToString(reqData.HCIEbuilddoor)}',
+                    HCIEbuilddoornoted = '${reqData.HCIEbuilddoornoted}',
+                    HCIEbuildoverview = '${boolToIntToString(reqData.HCIEbuildoverview)}',
+                    HCIEbuildoverviewnoted = '${reqData.HCIEbuildoverviewnoted}',
+                    HCIEsoundprotect = '${boolToIntToString(reqData.HCIEsoundprotect)}',
+                    HCIEsoundprotectnoted = '${reqData.HCIEsoundprotectnoted}',
+                    HCIEventilate = '${reqData.HCIEventilate}',
+                    HCIEventilateenough = '${boolToIntToString(reqData.HCIEventilateenough)}',
+                    HCIEventilateenoughnoted = '${reqData.HCIEventilateenoughnoted}',
+                    HCIEventilatesmoking = '${boolToIntToString(reqData.HCIEventilatesmoking)}',
+                    HCIEventilatesmokingnoted = '${reqData.HCIEventilatesmokingnoted}',
+                    HCIElightingenough = '${boolToIntToString(reqData.HCIElightingenough)}',
+                    HCIElightingenoughnoted = '${reqData.HCIElightingenoughnoted}',
+                    HCIElightinglaser = '${boolToIntToString(reqData.HCIElightinglaser)}',
+                    HCIElightinglasernoted = '${reqData.HCIElightinglasernoted}',
+                    HCIEsecureemergency = '${boolToIntToString(reqData.HCIEsecureemergency)}',
+                    HCIEsecureemergencynoted = '${reqData.HCIEsecureemergencynoted}',
+                    HCIEsecurealarm = '${boolToIntToString(reqData.HCIEsecurealarm)}',
+                    HCIEsecurealarmnoted = '${reqData.HCIEsecurealarmnoted}',
+                    HCIEsecurefire = '${boolToIntToString(reqData.HCIEsecurefire)}',
+                    HCIEsecurefirenoted = '${reqData.HCIEsecurefirenoted}',
+                    HCIEsecurecrowded = '${boolToIntToString(reqData.HCIEsecurecrowded)}',
+                    HCIEsecurecrowdednoted = '${reqData.HCIEsecurecrowdednoted}'
+                WHERE HCIEid = ` + req.params.id
+            )
+            res.send({
+                status: 'success'
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }
+    })
 }
 
 function boolToIntToString (bool) {

@@ -48,7 +48,7 @@ module.exports = function(app) {
     app.get('/getcompanyandowner/:id', function (req, res) {
         try {
             db.query(`
-            SELECT requestlicense.Cid, company.Cname, company.Chomeno, company.Cmoo, company.Csoi, company.Croad, company.Cvillage, company.Pid, company.Did, company.SDTid, owner.Oid, owner.Otel, company.Cemployee, company.Clat, company.Clong
+            SELECT requestlicense.Cid, company.Cname, company.Chomeno, company.Cmoo, company.Csoi, company.Croad, company.Cvillage, company.Pid, company.Did, company.SDTid, owner.Oid, owner.Otel, company.Cemployee, company.Carea, company.Clat, company.Clong
             FROM requestlicense
             LEFT JOIN company
             ON requestlicense.Cid = company.Cid
@@ -88,7 +88,8 @@ module.exports = function(app) {
         try {
             db.query(`
                 UPDATE company
-                SET Cemployee = '${req.body.Cemployee}',
+                SET Carea = '${req.body.Carea}',
+                    Cemployee = '${req.body.Cemployee}',
                     Chomeno = '${req.body.Chomeno}',
                     Cmoo = '${req.body.Cmoo}',
                     Csoi = '${req.body.Csoi}',
