@@ -29,6 +29,20 @@ module.exports = function(app) {
         })
     })
     
+    app.get('/getcompanybyowner/:id', function (req, res) {
+        db.query(`SELECT * FROM company
+                    LEFT JOIN requestlicense ON requestlicense.Cid = company.Cid 
+                    LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
+                    LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
+                    LEFT JOIN owner ON owner.Oid = company.Oid
+                    LEFT JOIN companytype ON companytype.CTid = company.CTid
+                    WHERE hcisummary.HCISresult = 1 and owner.Oid = ` + req.params.id + `
+                    GROUP BY company.Cid`, (err, result, f) => {
+            if(err) throw err
+            res.send(result)
+        })
+    })
+    
     app.get('/getcompanyforrequest', function (req, res) {
         db.query(`SELECT Cid, Cname FROM company`, (err, result, f) => {
             if(err) throw err

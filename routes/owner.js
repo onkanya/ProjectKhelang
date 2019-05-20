@@ -73,6 +73,16 @@ module.exports = function(app) {
             res.send(result)
         })
     })
+    
+    app.get('/getownerbyid/:id', function (req, res) {
+        db.query(`SELECT * FROM owner
+                INNER JOIN prefix
+                ON prefix.Prefixid = owner.Prefixid
+                WHERE Oid = ` + req.params.id, (err, result, f) => {
+            if(err) throw err
+            res.send(result)
+        })
+    })
 
     app.post('/newowner', function (req, res) {
         try {

@@ -117,7 +117,8 @@ module.exports = function(app) {
 
     app.get('/getrequest', function (req, res) {
         db.query(`SELECT * FROM requestlicense 
-                    LEFT JOIN company ON company.Cid = requestlicense.Cid`, (err, result, f) => {
+                    LEFT JOIN company ON company.Cid = requestlicense.Cid
+                    LEFT JOIN users ON users.Uid = requestlicense.Uid`, (err, result, f) => {
             if(err) throw err
             result.forEach(e => {
                 e.RLdate = moment(e.RLdate).format('DD-MM-YYYY')
@@ -145,12 +146,13 @@ module.exports = function(app) {
     
     app.get('/getrequestforinvestigation', function (req, res) {
         try {
-            db.query(`SELECT requestlicense.RLid, RLnorequest, RLgetlicensedate, company.Cid, Cname, RLfname, RLlname, RLstatus, HCISresult, LCreceiptno
+            db.query(`SELECT requestlicense.RLid, RLnorequest, RLgetlicensedate, company.Cid, Cname, RLfname, RLlname, RLstatus, HCISresult, LCreceiptno, Ufirstname, Ulastname
             FROM requestlicense 
             INNER JOIN company ON company.Cid = requestlicense.Cid
             LEFT JOIN licensecompany ON company.Cid = licensecompany.Cid
             LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
             LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
+            LEFT JOIN users ON users.Uid = hazardcompanyinvestigation.Uid
             WHERE RLstatus > 2
             GROUP BY requestlicense.RLid` , (err, result, f) => {
                 if(err) throw err
