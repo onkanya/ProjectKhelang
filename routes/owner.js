@@ -7,7 +7,8 @@ module.exports = function(app) {
                 LEFT JOIN requestlicense ON requestlicense.Cid = company.Cid
                 LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
                 LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
-                WHERE hcisummary.HCISresult = 1`, (err, result, f) => {
+                WHERE hcisummary.HCISresult = 1
+                GROUP BY owner.OID`, (err, result, f) => {
             if(err) throw err
             res.send(result)
         })
@@ -64,7 +65,10 @@ module.exports = function(app) {
     })
 
     app.get('/ownergetid/:id', function (req, res) {
-        db.query('SELECT * FROM `owner` WHERE Oid = ' + req.params.id, (err, result, f) => {
+        db.query(`SELECT * FROM owner
+                INNER JOIN prefix
+                ON prefix.Prefixid = owner.Prefixid
+                WHERE Oid = ` + req.params.id, (err, result, f) => {
             if(err) throw err
             res.send(result)
         })

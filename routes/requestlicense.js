@@ -24,16 +24,16 @@ module.exports = function(app) {
                     RLlname, RLage, RLnationality,
                     RLhomeno, RLmoo, RLsoi,
                     RLroad, RLvillage, SDTid,
-                    Did, Pid, RLtel,
-                    RLemail, RLdetail, Uid
+                    Did, Pid, RLtel, RLdetail,
+                    RLemail, Uid
                 ) VALUES (
                     '${req.body.Cid}', '${req.body.RLnorequest}',
                     '${req.body.Prefixid}', '${req.body.RLfname}',
                     '${req.body.RLlname}', '${req.body.RLage}', '${req.body.RLnationality}',
                     '${req.body.RLhomeno}', '${req.body.RLmoo}', '${req.body.RLsoi}',
                     '${req.body.RLroad}', '${req.body.RLvillage}', '${req.body.SDTid}',
-                    '${req.body.Did}', '${req.body.Pid}', '${req.body.RLtel}',
-                    '${req.body.RLemail}', '${req.body.RLdetail}', '${req.body.Uid}'
+                    '${req.body.Did}', '${req.body.Pid}', '${req.body.RLtel}', '${req.body.RLdetail}',
+                    '${req.body.RLemail}', '${req.body.Uid}'
                 )`,  (err, result, f) => {
                     if (err) throw err
                     db.query('SELECT LAST_INSERT_ID() as RLid', (err2, result2, f2) => {
@@ -145,12 +145,37 @@ module.exports = function(app) {
     
     app.get('/getrequestforinvestigation', function (req, res) {
         try {
-            db.query(`SELECT requestlicense.RLid, RLnorequest, RLgetlicensedate, Cname, RLfname, RLlname, RLstatus,HCISresult
+            db.query(`SELECT requestlicense.RLid, RLnorequest, RLgetlicensedate, company.Cid, Cname, RLfname, RLlname, RLstatus, HCISresult, LCreceiptno
             FROM requestlicense 
             INNER JOIN company ON company.Cid = requestlicense.Cid
+            LEFT JOIN licensecompany ON company.Cid = licensecompany.Cid
             LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
             LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
-            WHERE RLstatus > 2` , (err, result, f) => {
+            WHERE RLstatus > 2
+            GROUP BY requestlicense.RLid` , (err, result, f) => {
+                if(err) throw err
+                result.forEach(e => {
+                    e.RLdate = moment(e.RLdate).format('YYYY-MM-DD')
+                })
+                res.send(result)
+            })
+        }
+        catch (error) {
+            console.log(error)
+            return
+        }
+    })
+
+    app.get('/getrequestforreceipt', function (req, res) {
+        try {
+            db.query(`SELECT requestlicense.RLid, RLnorequest, RLgetlicensedate, company.Cid, Cname, RLfname, RLlname, RLstatus, HCISresult, LCreceiptno
+            FROM requestlicense 
+            INNER JOIN company ON company.Cid = requestlicense.Cid
+            LEFT JOIN licensecompany ON company.Cid = licensecompany.Cid
+            LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
+            LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
+            WHERE HCISresult = 1
+            GROUP BY requestlicense.RLid` , (err, result, f) => {
                 if(err) throw err
                 result.forEach(e => {
                     e.RLdate = moment(e.RLdate).format('YYYY-MM-DD')

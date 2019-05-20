@@ -8,4 +8,19 @@ module.exports = function(app) {
         })
     })
 
+    app.get('/getdistrict/:id', function (req, res) {
+        try {
+            db.query(`
+                SELECT Dname_th FROM district
+                WHERE Did = ` + req.params.id ,
+            (err, result, f) => {
+                if(err) throw err
+                res.send(result)                
+            })
+        } catch (error) {
+            console.log(error)
+            return
+        }        
+    })
+
 }

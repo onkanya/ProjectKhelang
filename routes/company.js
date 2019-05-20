@@ -22,7 +22,8 @@ module.exports = function(app) {
                     LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
                     LEFT JOIN owner ON owner.Oid = company.Oid
                     LEFT JOIN companytype ON companytype.CTid = company.CTid
-                    WHERE hcisummary.HCISresult = 1`, (err, result, f) => {
+                    WHERE hcisummary.HCISresult = 1
+                    GROUP BY company.Cid`, (err, result, f) => {
             if(err) throw err
             res.send(result)
         })
@@ -39,7 +40,13 @@ module.exports = function(app) {
         db.query(`SELECT * FROM company
                 LEFT JOIN licensefee
                 ON licensefee.LFid = company.LFid
-                WHERE Cid = ` + req.params.id , (err, result, f) => {
+                INNER JOIN owner
+                ON owner.Oid = company.Oid
+                INNER JOIN companytype
+                ON companytype.CTid = company.CTid
+                LEFT JOIN requestlicense
+                ON requestlicense.Cid = company.Cid
+                WHERE company.Cid = ` + req.params.id , (err, result, f) => {
             if(err) throw err
             result.forEach(e => {
                 e.Cstartdate = moment(e.Cstartdate).format('YYYY-MM-DD')
@@ -57,13 +64,14 @@ module.exports = function(app) {
                     Cname, Carea, Cmachine, 
                     Cemployee, Cstartdate, Chomeno, 
                     Cmoo, Csoi, Croad, 
-                    Cvillage, SDTid, Did, Pid
+                    Cvillage, SDTid, Did, Pid, Ctel, Cnoted
                 ) VALUES (
                     '${req.body.CTid}', '${req.body.LFid}', '${req.body.Oid}', 
                     '${req.body.Cname}', '${req.body.Carea}', '${req.body.Cmachine}', 
                     '${req.body.Cemployee}', '${req.body.Cstartdate}', '${req.body.Chomeno}', 
                     '${req.body.Cmoo}', '${req.body.Csoi}', '${req.body.Croad}', 
-                    '${req.body.Cvillage}', '${req.body.SDTid}', '${req.body.Did}', '${req.body.Pid}'
+                    '${req.body.Cvillage}', '${req.body.SDTid}', '${req.body.Did}', '${req.body.Pid}',
+                    '${req.body.Ctel}', '${req.body.Cnoted}'
                 )
             `, (err, result, f) => {
                 if (err) throw err
@@ -87,7 +95,7 @@ module.exports = function(app) {
             db.query(`
                 UPDATE company
                 SET CTid = '${req.body.CTid}', 
-                    CTCid = '${req.body.CTCid}', 
+                    LFid = '${req.body.LFid}', 
                     Oid = '${req.body.Oid}', 
                     Cname = '${req.body.Cname}', 
                     Carea = '${req.body.Carea}', 
@@ -101,7 +109,9 @@ module.exports = function(app) {
                     Cvillage = '${req.body.Cvillage}', 
                     SDTid = '${req.body.SDTid}', 
                     Did = '${req.body.Did}', 
-                    Pid = '${req.body.Pid}'
+                    Pid = '${req.body.Pid}',
+                    Ctel = '${req.body.Ctel}',
+                    Cnoted = '${req.body.Cnoted}'
                 WHERE Cid = ` + req.params.id
             )
             res.send({
