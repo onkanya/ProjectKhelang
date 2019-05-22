@@ -8,7 +8,8 @@ module.exports = function(app) {
                 LEFT JOIN hazardcompanyinvestigation ON hazardcompanyinvestigation.RLid = requestlicense.RLid
                 LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
                 WHERE hcisummary.HCISresult = 1
-                GROUP BY owner.OID`, (err, result, f) => {
+                GROUP BY owner.OID
+                ORDER BY owner.Oid desc`, (err, result, f) => {
             if(err) throw err
             res.send(result)
         })

@@ -23,7 +23,8 @@ module.exports = function(app) {
                     LEFT JOIN owner ON owner.Oid = company.Oid
                     LEFT JOIN companytype ON companytype.CTid = company.CTid
                     WHERE hcisummary.HCISresult = 1
-                    GROUP BY company.Cid`, (err, result, f) => {
+                    GROUP BY company.Cid
+                    ORDER BY company.Cid desc`, (err, result, f) => {
             if(err) throw err
             res.send(result)
         })
@@ -60,6 +61,7 @@ module.exports = function(app) {
                 ON companytype.CTid = company.CTid
                 LEFT JOIN requestlicense
                 ON requestlicense.Cid = company.Cid
+                LEFT JOIN licensecompany ON licensecompany.Cid = company.Cid
                 WHERE company.Cid = ` + req.params.id , (err, result, f) => {
             if(err) throw err
             result.forEach(e => {

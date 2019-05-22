@@ -8,10 +8,10 @@ var storage = multer.diskStorage({
         cb(null, 'assets/pdf/requestlicense/')
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + '.pdf')
+        cb(null, file.originalname)
     }
 })
-var upload = multer({ dest: 'assets/pdf/requestlicense/' })
+var upload = multer({ storage: storage })
 
 module.exports = function(app) {
     app.post('/newrequest', function (req, res) {
@@ -50,6 +50,19 @@ module.exports = function(app) {
         }
     })
     
+    app.get('/getlastRLnorequest', function (req, res) {
+        try {
+            db.query(`SELECT RLnorequest FROM requestlicense ORDER BY RLid desc LIMIT 1` , (err, result, f) => {
+                if(err) throw err
+                res.send(result)
+            })
+        }
+        catch (error) {
+            console.log(error)
+            return
+        }
+    })
+
     app.post('/updaterequest/:id', function (req, res) {
         try {
             console.log(req.body.RLdate)
@@ -118,7 +131,8 @@ module.exports = function(app) {
     app.get('/getrequest', function (req, res) {
         db.query(`SELECT * FROM requestlicense 
                     LEFT JOIN company ON company.Cid = requestlicense.Cid
-                    LEFT JOIN users ON users.Uid = requestlicense.Uid`, (err, result, f) => {
+                    LEFT JOIN users ON users.Uid = requestlicense.Uid
+                    ORDER BY RLid desc`, (err, result, f) => {
             if(err) throw err
             result.forEach(e => {
                 e.RLdate = moment(e.RLdate).format('DD-MM-YYYY')
@@ -154,7 +168,8 @@ module.exports = function(app) {
             LEFT JOIN hcisummary ON hcisummary.HCISid = hazardcompanyinvestigation.HCISid
             LEFT JOIN users ON users.Uid = hazardcompanyinvestigation.Uid
             WHERE RLstatus > 2
-            GROUP BY requestlicense.RLid` , (err, result, f) => {
+            GROUP BY requestlicense.RLid
+            ORDER BY requestlicense.RLid desc` , (err, result, f) => {
                 if(err) throw err
                 result.forEach(e => {
                     e.RLdate = moment(e.RLdate).format('YYYY-MM-DD')
@@ -257,14 +272,15 @@ module.exports = function(app) {
             db.query(`DELETE FROM requestpdf WHERE RLid = ` + req.params.id)
             fs.mkdir(newPath, (err) => {
                 for (let i = 0; i < req.files.length; i++) {
-                    newFilePath =  newPath + req.files[i].filename + '.pdf'
+                    newFilePath =  newPath + req.files[i].filename
+                    // + '.pdf'
                     fs.copyFile(req.files[i].path, newFilePath, (err) => {
                         fs.unlink(req.files[i].path, (err) => {
                             allfile.push(newFilePath)
                             if (allfile.length === req.files.length) {
-                                let query = 'INSERT INTO requestpdf(RPDFpath, RLid) VALUES'
+                                let query = 'INSERT INTO requestpdf(RPDFpath, RPDFname, RLid) VALUES'
                                 req.files.forEach((e, idx) => {
-                                    query += `('${urlPath + req.files[idx].filename}.pdf', ${req.params.id})`
+                                    query += `('${urlPath + req.files[idx].filename}', '${req.files[idx].filename}', ${req.params.id})`
                                     if (idx !== req.files.length - 1) {
                                         query += ','
                                     }
