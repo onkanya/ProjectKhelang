@@ -3,6 +3,7 @@ var db = require('../config')
 module.exports = function(app) {
     app.post('/newhcie', function (req, res) {
         const reqData = req.body
+        console.log(reqData)
         try {
             db.query(`
             INSERT INTO hcienvironment 
